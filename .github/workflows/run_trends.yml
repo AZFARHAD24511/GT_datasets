@@ -26,14 +26,15 @@ jobs:
       run: |
         python fetch_trends.py
 
-    - name: Commit and push changes
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add data/*
-        if git diff --cached --quiet; then
-          echo "No changes to commit"
-        else
-          git commit -m "Update trends data [auto]"
-          git push
-        fi
+        - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/*
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update trends data [auto]"
+            git push https://AZFARHAD24511:${{ secrets.GH_PAT }}@github.com/AZFARHAD24511/GT_datasets.git HEAD:main
+          fi
+
