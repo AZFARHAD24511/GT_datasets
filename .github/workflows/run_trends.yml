@@ -1,0 +1,35 @@
+name: Run Google Trends Daily
+
+on:
+  schedule:
+    - cron: '0 0,6,12,18 * * *'  # اجرای ۴ بار در روز
+  workflow_dispatch:  # اجرا با دکمه دستی هم ممکنه
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Clone the repo
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install pytrends pandas
+
+    - name: Run Python script
+      run: |
+        python fetch_trends.py
+
+    - name: Commit and push changes
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add data/*
+        git commit -m "Update trends data [auto]" || echo "No changes"
+        git push
