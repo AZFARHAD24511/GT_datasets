@@ -3,7 +3,7 @@ name: Run Google Trends Daily
 on:
   schedule:
     - cron: '0 0,6,12,18 * * *'  # اجرای ۴ بار در روز
-  workflow_dispatch:
+  workflow_dispatch:             # امکان اجرای دستی هم هست
 
 jobs:
   run-script:
@@ -12,6 +12,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GH_PAT }}
 
     - name: Set up Python 3.11
       uses: actions/setup-python@v4
