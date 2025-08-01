@@ -3,9 +3,11 @@ import pandas as pd
 from datetime import datetime
 import time
 import random
-import os
 
-# نگاشت فارسی → پینگلیش برای نام ستون‌ها
+# اتصال به گوگل ترندز
+pytrends = TrendReq(hl='fa', tz=270)  # تهران +4:30
+
+# نگاشت فارسی به پینگلیش
 keyword_map = {
     'خرید دلار': 'kharid_dollar',
     'فروش دلار': 'foroosh_dollar',
@@ -24,46 +26,50 @@ keyword_map = {
     'جنگ': 'jang'
 }
 
-# لیست کلیدواژه‌ها (فقط فارسی)
+# لیست کلیدواژه‌ها
 keywords = list(keyword_map.keys())
 
-# تقسیم کلیدواژه‌ها به گروه‌های ۵تایی
+# بازه زمانی
+start_date = "2025-07-31"
+end_date = datetime.now().strftime("%Y-%m-%d")
+
+# تقسیم کلیدواژه‌ها به گروه‌های 5تایی
 def chunk_keywords(lst, size=5):
     for i in range(0, len(lst), size):
         yield lst[i:i+size]
 
-# ساخت session پایدار با Pytrends
-pytrends = TrendReq(hl='fa', tz=330)
-
-# تنظیم مسیر فایل خروجی
-today_str = datetime.today().strftime('%Y-%m-%d')
-output_folder = "data"
-os.makedirs(output_folder, exist_ok=True)
-output_path = os.path.join(output_folder, f"trends_{today_str}.csv")
-
-# دریافت داده‌ها و ذخیره‌سازی موقت
+# ذخیره نتایج
 all_data = []
 
-for group in chunk_keywords(keywords, 5):
-    print(f"📡 دریافت داده برای: {group}")
-    try:
-        pytrends.build_payload(group, timeframe='now 4-H')
-        data = pytrends.interest_over_time()
-        if not data.empty:
-            data = data.drop(columns='isPartial')
-            data.rename(columns=keyword_map, inplace=True)
-            all_data.append(data)
-    except Exception as e:
-        print(f"❌ خطا هنگام دریافت داده برای {group}: {e}")
-    time.sleep(random.uniform(5, 10))  # تاخیر برای جلوگیری از بلاک شدن
+# گرفتن داده برای هر گروه
+for chunk in chunk_keywords(keywords, size=5):
+    pytrends.build_payload(chunk, timeframe=f'{start_date} {end_date}', geo='')
+    data = pytrends.interest_over_time()
 
-# ادغام و ذخیره نهایی
-if all_data:
-    result_df = pd.concat(all_data, axis=1)
-    result_df = result_df.loc[:,~result_df.columns.duplicated()]  # حذف ستون‌های تکراری
-    result_long = result_df.reset_index().melt(id_vars=['date'], var_name='keyword', value_name='hits')
-    result_long['date'] = result_long['date'].dt.strftime('%#m/%#d/%Y')
-    result_long.to_csv(output_path)
-    print(f"✅ ذخیره انجام شد: {output_path}")
-else:
-    print("⚠️ هیچ داده‌ای دریافت نشد.")
+    if data.empty:
+        continue
+
+    # حذف ستون isPartial
+    data = data.drop(columns='isPartial', errors='ignore')
+
+    # تبدیل به long format
+    df_long = data.reset_index().melt(id_vars='date', var_name='keyword_fa', value_name='hits')
+
+    # افزودن نام پینگلیش
+    df_long['keyword'] = df_long['keyword_fa'].map(keyword_map)
+
+    # حذف ستون فارسی
+    df_long = df_long[['date', 'keyword', 'hits']]
+
+    all_data.append(df_long)
+
+    # توقف تصادفی بین درخواست‌ها
+    time.sleep(random.uniform(2, 5))
+
+# ترکیب همه داده‌ها
+final_df = pd.concat(all_data, ignore_index=True)
+
+# ذخیره به فایل CSV
+final_df.to_csv('google_trends_long_daily.csv', index=False, encoding='utf-8-sig')
+
+print("✅ دریافت داده‌ها تمام شد و فایل ذخیره شد.")
