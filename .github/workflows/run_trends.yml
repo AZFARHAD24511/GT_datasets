@@ -2,7 +2,7 @@ name: Run Google Trends Daily
 
 on:
   schedule:
-    - cron: '0 0,6,12,18 * * *'  # اجرای ۴ بار در روز
+    - cron: '0 0,2,4,6,8,10,12,14,16,18,20,22 * * *'  # اجرای ۴ بار در روز
   workflow_dispatch:             # امکان اجرای دستی هم هست
 
 jobs:
