@@ -35,6 +35,6 @@ jobs:
           echo "No changes to commit"
         else
           git commit -m "Update trends data [auto]"
-          git push https://AZFARHAD24511:${{ secrets.GH_PAT }}@github.com/AZFARHAD24511/GT_datasets.git HEAD:main
+          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/AZFARHAD24511/GT_datasets.git HEAD:main
         fi
 
