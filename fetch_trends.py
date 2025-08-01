@@ -61,7 +61,9 @@ for group in chunk_keywords(keywords, 5):
 if all_data:
     result_df = pd.concat(all_data, axis=1)
     result_df = result_df.loc[:,~result_df.columns.duplicated()]  # حذف ستون‌های تکراری
-    result_df.to_csv(output_path)
+    result_long = result_df.reset_index().melt(id_vars=['date'], var_name='keyword', value_name='hits')
+    result_long['date'] = result_long['date'].dt.strftime('%#m/%#d/%Y')
+    result_long.to_csv(output_path)
     print(f"✅ ذخیره انجام شد: {output_path}")
 else:
     print("⚠️ هیچ داده‌ای دریافت نشد.")
